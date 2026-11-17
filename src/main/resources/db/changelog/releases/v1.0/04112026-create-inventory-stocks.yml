@@ -1,0 +1,91 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-inventory-stocks
+      author: tabletka97
+      changes:
+        - createTable:
+            tableName: inventory_stocks
+            columns:
+
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: darkstore_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_inventory_stock_darkstore
+                    referencedTableName: darkstores
+                    referencedColumnNames: id
+
+              - column:
+                  name: storage_bin_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_inventory_stock_storage_bin
+                    referencedTableName: storage_bins
+                    referencedColumnNames: id
+
+              - column:
+                  name: product_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: sku
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: quantity_on_hand
+                  type: int
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: quantity_reserved
+                  type: int
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: version
+                  type: bigint
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: created_at
+                  type: timestamptz
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: updated_at
+                  type: timestamptz
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+
+        - sql:
+            # add inventory check constraint
+            sql: ALTER TABLE inventory_stocks ADD CONSTRAINT chk_quantity_on_hand CHECK (quantity_on_hand >= 0);
+        - sql:
+            # add reserved check constraint
+            sql: ALTER TABLE inventory_stocks ADD CONSTRAINT chk_quantity_reserved CHECK (quantity_reserved >= 0);
+
+        - addUniqueConstraint:
+            tableName: inventory_stocks
+            columnNames: darkstore_id, product_id
+            constraintName: uq_inventory_stock_darkstore_product

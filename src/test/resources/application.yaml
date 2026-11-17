@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: warehouse-service
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://test-issuer.local/realms/fds
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+  liquibase:
+    enabled: true
+    change-log: db/changelog/changelog-master.yml
+
+order:
+  reservation-time: 30m
+
+logging:
+  level:
+    root: WARN
+    com.fds.warehouseservice: INFO
