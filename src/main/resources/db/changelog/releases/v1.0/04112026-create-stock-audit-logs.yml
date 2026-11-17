@@ -1,0 +1,69 @@
+databaseChangeLog:
+  - changeSet: 
+      id: create-stock-audit-logs
+      author: tabletka97
+      changes:
+        - createTable: 
+            tableName: stock_audit_logs
+            columns:
+
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: darkstore_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_stock_audit_log_darkstore
+                    referencedTableName: darkstores
+                    referencedColumnNames: id
+
+              - column:
+                  name: product_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: operation_type
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: quantity_change
+                  type: int
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: resulting_quantity
+                  type: int
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: reason_code
+                  type: varchar(50)
+
+              - column:
+                  name: notes
+                  type: varchar(255)
+
+              - column:
+                  name: performed_by
+                  type: uuid
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: created_at
+                  type: timestamptz
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+            

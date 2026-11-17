@@ -9,7 +9,7 @@ plugins {
 
 group = 'com.fds'
 version = '0.0.1-SNAPSHOT'
-description = 'template-service' //todo dont forget to change
+description = 'warehouse-service'
 
 java {
     toolchain {
@@ -19,7 +19,6 @@ java {
 
 repositories {
     mavenCentral()
-    mavenLocal()
 
     maven {
         name = "GitHubPackages"
@@ -37,6 +36,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-liquibase'
     implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'com.fasterxml.uuid:java-uuid-generator:5.2.0'
     implementation 'org.mapstruct:mapstruct:1.6.3'
     compileOnly 'org.projectlombok:lombok'
     runtimeOnly 'org.postgresql:postgresql'
@@ -70,7 +71,7 @@ publishing {
     repositories {
         maven {
             name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/FastDeliveryService/placeholder") //todo change to repo name
+            url = uri("https://maven.pkg.github.com/FastDeliveryService/warehouse-service")
             credentials {
                 username = System.getenv("GITHUB_ACTOR")
                 password = System.getenv("GITHUB_TOKEN")
@@ -103,9 +104,9 @@ jacocoTestReport {
 
 sonar {
     properties {
-        property "sonar.projectKey", "FastDeliveryService_template-service"  //todo important to change
+        property "sonar.projectKey", "FastDeliveryService_warehouse-service"
         property "sonar.organization", "fastdeliveryservice"
-        property "sonar.projectName", "FDS Template service" //todo important to change
+        property "sonar.projectName", "FDS Warehouse service"
         property "sonar.coverage.jacoco.xmlReportPaths",
                 "${layout.buildDirectory.get()}/test-results/reports/test/jacocoTestReport.xml"
     }

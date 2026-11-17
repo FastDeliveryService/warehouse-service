@@ -1,6 +1,6 @@
 spring:
   application:
-    name: template-service
+    name: warehouse-service
   security:
     oauth2:
       resourceserver:
@@ -20,4 +20,7 @@ spring:
 
   liquibase:
     enabled: true
-    change-log: db/changelog/main-changelog.xml
+    change-log: db/changelog/changelog-master.yml
+
+order:
+  reservation-time: 30m

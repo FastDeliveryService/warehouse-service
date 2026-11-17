@@ -17,12 +17,9 @@ RUN ./gradlew bootJar --no-daemon
 FROM eclipse-temurin:25-jre-alpine
 WORKDIR /app
 RUN addgroup -S appuser && adduser -S appuser -G appuser
-# todo change jar file name
-COPY --from=builder /app/build/libs/*.jar template-service.jar
+COPY --from=builder /app/build/libs/*.jar warehouse-service.jar
 
-# todo change jar file name
-RUN chown appuser:appuser template-service.jar
+RUN chown appuser:appuser warehouse-service.jar
 USER appuser:appuser
 EXPOSE 8080
-# todo change executable file name
-ENTRYPOINT ["java", "-jar", "template-service.jar"]
+ENTRYPOINT ["java", "-jar", "warehouse-service.jar"]

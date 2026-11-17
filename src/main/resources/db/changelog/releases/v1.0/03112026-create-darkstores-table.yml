@@ -1,0 +1,57 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-darkstores
+      author: tabletka97
+      changes:
+        - createTable:
+            tableName: darkstores
+            columns:
+
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: code
+                  type: varchar(50)
+                  constraints:
+                    unique: true
+
+              - column:
+                  name: name
+                  type: varchar(255)
+
+              - column:
+                  name: address
+                  type: varchar(255)
+
+              - column:
+                  name: latitude
+                  type: decimal(10, 8)
+
+              - column:
+                  name: longitude
+                  type: decimal(10, 8)
+
+              - column:
+                  name: created_at
+                  type: timestamptz
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: updated_at
+                  type: timestamptz
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: active
+                  type: boolean
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
