@@ -39,6 +39,9 @@ jobs:
           key: ${{ runner.os }}-sonar
           restore-keys: ${{ runner.os }}-sonar
       - name: Build with Gradle and creating test reports
+        env:
+          GITHUB_ACTOR: ${{ secrets.GH_GITHUB_ACTOR }}
+          GITHUB_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
         run: ./gradlew build jacocoTestReport
       - name: Sonar cube analysis
         env:
