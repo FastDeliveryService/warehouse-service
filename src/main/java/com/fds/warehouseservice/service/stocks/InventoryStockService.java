@@ -20,7 +20,4 @@ public interface InventoryStockService {
     List<StockReservationItemEntity> reserve(ReservationRequest request);
     void releaseReservation(StockReservationEntity reservation);
     void writeOff(StockReservationEntity reservation);
-
-
-//    boolean checkAvailability(ReservationRequest request); //todo delete
 }

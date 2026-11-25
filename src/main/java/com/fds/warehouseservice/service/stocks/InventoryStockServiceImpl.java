@@ -1,5 +1,6 @@
 package com.fds.warehouseservice.service.stocks;
 
+import com.fds.warehouseservice.dto.reservations.ReservationItemRequest;
 import com.fds.warehouseservice.dto.reservations.ReservationRequest;
 import com.fds.warehouseservice.dto.stocks.AdjustmentStockRequest;
 import com.fds.warehouseservice.dto.stocks.StockRequest;
@@ -123,65 +124,90 @@ public class InventoryStockServiceImpl implements InventoryStockService {
         return stockMapper.entityToResponse(stock);
     }
 
-    @Override //todo retry
+    @Override
     @Transactional(propagation = Propagation.MANDATORY)
     public List<StockReservationItemEntity> reserve(ReservationRequest request) {
-        List<StockReservationItemEntity> result = new ArrayList<>();
+        UUID darkstoreId = request.darkstoreId();
 
-        request.items().forEach(item -> {
-            UUID productId = item.productId();
-            Integer quantity = item.quantity();
+        return request.items().stream()
+                .sorted(Comparator.comparing(ReservationItemRequest::productId))
+                .map(item -> {
+                    UUID productId = item.productId();
+                    Integer quantity = item.quantity();
 
-            InventoryStocksEntity availableStock = getStock(productId, request.darkstoreId());
-            int available = availableStock.getQuantityOnHand() - availableStock.getQuantityReserved();
+                    int updatedRows = stockRepository.atomicReserve(productId, darkstoreId, quantity);
+                    if (updatedRows == 0) {
+                        if (!stockRepository.existsByProductIdAndDarkstoreId(productId, darkstoreId)) {
+                            throw new NoSuchElementException(
+                                    String.format("There is no product with id %s at darkstore with id %s",
+                                            productId, darkstoreId));
+                        }
+                        throw new NotEnoughStockException(productId, darkstoreId);
+                    }
 
-            if (available < quantity) {
-                throw new NotEnoughStockException(productId, request.darkstoreId());
-            }
 
-            availableStock.setQuantityReserved(availableStock.getQuantityReserved() + quantity);
-
-            StockReservationItemEntity reservationItem = new StockReservationItemEntity();
-            reservationItem.setQuantity(quantity);
-            reservationItem.setProductId(productId);
-            result.add(reservationItem);
-        });
-        return result;
+                    StockReservationItemEntity reservationItem = new StockReservationItemEntity();
+                    reservationItem.setQuantity(quantity);
+                    reservationItem.setProductId(productId);
+                    return reservationItem;
+                }).toList();
     }
 
 
     @Override
     @Transactional(propagation = Propagation.MANDATORY)
     public void releaseReservation(StockReservationEntity reservation) {
-        reservation.getItems().forEach(item -> {
-            InventoryStocksEntity stock = getStock(item.getProductId(), reservation.getDarkstore().getId());
-            stock.setQuantityReserved(stock.getQuantityReserved() - item.getQuantity());
-        });
+        UUID darkstoreId = reservation.getDarkstore().getId();
+
+        reservation.getItems().stream()
+                .sorted(Comparator.comparing(StockReservationItemEntity::getProductId))
+                .forEach(item -> {
+                    UUID productId = item.getProductId();
+                    int quantity = item.getQuantity();
+
+                    int rowsEdited = stockRepository.atomicReservationCancel(
+                            productId,
+                            darkstoreId,
+                            quantity
+                    );
+                    if (rowsEdited == 0) {
+                        if (stockRepository.existsByProductIdAndDarkstoreId(productId, darkstoreId)) {
+                            throw new NoSuchElementException(String.format(
+                                    "There is no product with id %s at darkstore with id %s",
+                                    productId, darkstoreId));
+                        } else {
+                            throw new IllegalStateException(String.format(
+                                    "Can't release more (%d), then reserved for reservation id %s",
+                                    quantity, reservation.getId()));
+                        }
+                    }
+                });
     }
 
     @Override
     @Transactional(propagation = Propagation.MANDATORY)
     public void writeOff(StockReservationEntity reservation) {
-        reservation.getItems().forEach(item -> {
-            InventoryStocksEntity stocks = getStock(item.getProductId(), reservation.getDarkstore().getId());
+        DarkstoreEntity darkstore = reservation.getDarkstore();
 
-            stocks.setQuantityOnHand(stocks.getQuantityOnHand() - item.getQuantity());
-            stocks.setQuantityReserved(stocks.getQuantityReserved() - item.getQuantity());
-            stockRepository.save(stocks);
+        reservation.getItems().stream()
+                .sorted(Comparator.comparing(StockReservationItemEntity::getProductId))
+                .forEach(item -> {
+                    UUID productId = item.getProductId();
+                    int quantity = item.getQuantity();
 
-            stockAuditService.systemOperation(
-                    StockAuditOperationType.OUTBOUND,
-                    reservation.getDarkstore(),
-                    item.getProductId(),
-                    item.getQuantity(),
-                    stocks.getQuantityOnHand()
-            );
-        });
-    }
+                    int resultingQuantity = stockRepository.atomicWriteOff(productId, darkstore.getId(), quantity)
+                            .orElseThrow(() -> new IllegalStateException(
+                                    String.format("Cannot write off %d of product %s at darkstore %s: " +
+                                                    "stock not found or insufficient onHand/reserved",
+                                            quantity, productId, darkstore.getId())));
 
-    private InventoryStocksEntity getStock(UUID productId, UUID darkstoreId) {
-        return stockRepository.getByProductIdAndDarkstoreId(productId, darkstoreId).orElseThrow(() ->
-                new NoSuchElementException(String.format("There is no product with id %s at darkstore with id %s",
-                        productId, darkstoreId)));
+                    stockAuditService.systemOperation(
+                            StockAuditOperationType.OUTBOUND,
+                            darkstore,
+                            productId,
+                            quantity,
+                            resultingQuantity
+                    );
+                });
     }
 }

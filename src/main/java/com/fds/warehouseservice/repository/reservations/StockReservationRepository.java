@@ -37,4 +37,6 @@ public interface StockReservationRepository extends CrudRepository<StockReservat
            AND e.expiresAt < :now
            """)
     List<StockReservationEntity> findExpired(OffsetDateTime now);
+
+    boolean existsByOrderIdAndStatusIn(UUID orderId, Collection<ReservationStatus> statuses);
 }

@@ -53,8 +53,8 @@ public class StockReservationServiceImpl implements StockReservationService {
     @Override
     @Transactional
     public ReservationResponse createReservation(ReservationRequest request) {
-        boolean exist = reservationRepository
-                .findByOrderIdAndStatus(request.orderId(), ReservationStatus.ACTIVE).isPresent();
+        boolean exist = reservationRepository.existsByOrderIdAndStatusIn(
+                request.orderId(), List.of(ReservationStatus.ACTIVE, ReservationStatus.CONFIRMED));
 
         if (exist) {
             throw new IllegalStateException("There is already existing reservation for order with id " +
@@ -116,8 +116,8 @@ public class StockReservationServiceImpl implements StockReservationService {
         List<StockReservationEntity> reservationsToRelease = reservationRepository.findExpired(OffsetDateTime.now());
 
         reservationsToRelease.forEach(reservation -> {
-           reservation.setStatus(ReservationStatus.EXPIRED);
-           stockService.releaseReservation(reservation);
+            reservation.setStatus(ReservationStatus.EXPIRED);
+            stockService.releaseReservation(reservation);
         });
 
         return reservationsToRelease.size();
