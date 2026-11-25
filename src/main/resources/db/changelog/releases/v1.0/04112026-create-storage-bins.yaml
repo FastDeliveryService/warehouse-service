@@ -1,0 +1,60 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-storage-bins
+      author: tabletka97
+      changes:
+        - createTable:
+            tableName: storage_bins
+            columns:
+
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: darkstore_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_darkstores
+                    referencedTableName: darkstores
+                    referencedColumnNames: id
+
+              - column:
+                  name: bin_code
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: zone
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: aisle
+                  type: varchar(100)
+
+              - column:
+                  name: shelf
+                  type: varchar(100)
+
+              - column:
+                  name: active
+                  type: boolean
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+
+        - createIndex:
+            tableName: storage_bins
+            indexName: idx-one-bin-code-per-darkstore
+            unique: true
+            columns:
+              - column:
+                  name: darkstore_id
+              - column:
+                  name: bin_code
